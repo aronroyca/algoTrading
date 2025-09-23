@@ -1,10 +1,12 @@
 import pandas as pd
-import yfinance as yf
+from pandas_datareader import data as pdr
 
 
 def main() -> None:
-    df = yf.download("SPY", period="60d", interval="1d", progress=False)
-    df = df.tail(5)
+    # Stooq uses ticker format like 'SPY'
+    df = pdr.DataReader("SPY", data_source="stooq")
+    # Stooq returns most-recent-first; reverse to chronological
+    df = df.sort_index().tail(5)
     pd.set_option("display.width", 120)
     pd.set_option("display.max_columns", 10)
     print(df[["Open", "High", "Low", "Close", "Volume"]])
