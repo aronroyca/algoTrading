@@ -16,10 +16,12 @@ def main() -> None:
     df["BB_Upper"] = df["SMA20"] + (rolling_std * 2)
     df["BB_Lower"] = df["SMA20"] - (rolling_std * 2)
     
-    df = df.tail(5)
+    # Show last 10 rows in table, but use all data for chart
+    df_display = df.tail(10)
     pd.set_option("display.width", 120)
     pd.set_option("display.max_columns", 10)
-    print(df[["Open", "High", "Low", "Close", "Volume", "SMA20", "BB_Upper", "BB_Lower"]])
+    print(f"Data points: {len(df)} days")
+    print(df_display[["Open", "High", "Low", "Close", "Volume", "SMA20", "BB_Upper", "BB_Lower"]])
     
     # Create interactive chart
     fig = go.Figure()
@@ -49,7 +51,7 @@ def main() -> None:
         y=df['BB_Upper'],
         mode='lines',
         name='BB Upper',
-        line=dict(color='red', width=1, dash='dash')
+        line=dict(color='red', width=2)
     ))
     
     fig.add_trace(go.Scatter(
@@ -57,15 +59,15 @@ def main() -> None:
         y=df['BB_Lower'],
         mode='lines',
         name='BB Lower',
-        line=dict(color='red', width=1, dash='dash'),
-        fill='tonexty'
+        line=dict(color='red', width=2)
     ))
     
     fig.update_layout(
-        title='AAPL with Bollinger Bands',
+        title=f'SOUN with Bollinger Bands ({len(df)} days)',
         xaxis_title='Date',
         yaxis_title='Price',
-        height=600
+        height=600,
+        showlegend=True
     )
     
     # Save as HTML file
