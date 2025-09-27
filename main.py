@@ -4,15 +4,21 @@ from pandas_datareader import data as pdr
 
 def main() -> None:
     # Stooq uses ticker format like 'SPY'
-    df = pdr.DataReader("SPY", data_source="stooq")
+    df = pdr.DataReader("AAPL", data_source="stooq")
     # Stooq returns most-recent-first; reverse to chronological
     df = df.sort_index()
     # Add a small 20-day SMA on Close
     df["SMA20"] = df["Close"].rolling(window=20, min_periods=1).mean()
+    
+    # Add Bollinger Bands (20-day, 2 standard deviations)
+    rolling_std = df["Close"].rolling(window=20, min_periods=1).std()
+    df["BB_Upper"] = df["SMA20"] + (rolling_std * 2)
+    df["BB_Lower"] = df["SMA20"] - (rolling_std * 2)
+    
     df = df.tail(5)
     pd.set_option("display.width", 120)
     pd.set_option("display.max_columns", 10)
-    print(df[["Open", "High", "Low", "Close", "Volume", "SMA20"]])
+    print(df[["Open", "High", "Low", "Close", "Volume", "SMA20", "BB_Upper", "BB_Lower"]])
 
 
 if __name__ == "__main__":
