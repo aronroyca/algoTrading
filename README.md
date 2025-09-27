@@ -27,3 +27,4 @@ source .venv/bin/activate
 ## Notes
 - Data source: Stooq via pandas-datareader (no API key required).
 - Tested with Python 3.13.
+- Now includes Bollinger Bands and SMA20 indicators.
