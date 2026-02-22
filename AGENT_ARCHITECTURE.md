@@ -1,6 +1,8 @@
 # Project Atlas — Autonomous Algorithmic Trading Platform
 
-*Architecture blueprint based on Project Spartan's proven agentic patterns*
+*Architecture planning document based on Project Spartan's proven agentic patterns*
+
+**Note:** This is a **planning and design document** for a personal trading project. Implementation will happen in phases as outlined in the roadmap.
 
 ---
 
@@ -67,7 +69,7 @@ Atlas runs as an autonomous pipeline with **three distinct stages**:
    - Adjusts for volatility (ATR-based stops)
 5. Makes binary decision: **APPROVED** or **REJECTED**
    - If approved: forwards to execution queue with final parameters
-   - If rejected: logs reason to database and Slack
+   - If rejected: logs reason to database and terminal output
 6. Continuously monitors open positions for:
    - Stop loss triggers
    - Take profit targets
@@ -95,7 +97,7 @@ Atlas runs as an autonomous pipeline with **three distinct stages**:
 6. Updates position tracking:
    - Entry price, size, timestamp
    - Stop loss and take profit orders (OCO/bracket orders)
-7. Logs trade to database and posts summary to Slack:
+7. Logs trade to database and terminal output:
    ```
    ✅ EXECUTED: AAPL - Momentum Long | 15m
    Entry: $185.42 x 100 shares
@@ -130,14 +132,19 @@ Atlas runs as an autonomous pipeline with **three distinct stages**:
 - **Portfolio tracking database** — PostgreSQL or MongoDB
 
 ### Communication & Logging
-- **Slack API** — real-time trade notifications, performance summaries, error alerts
-- **PostgreSQL / TimescaleDB** — trade history, performance metrics, signal logs
-- **Grafana** — real-time dashboard for portfolio health, win rate, P&L
+- **Terminal output** — Real-time trade notifications and status updates
+- **Log files** — Structured logging to `data/logs/` for analysis
+- **PostgreSQL / SQLite** — Trade history, performance metrics, signal logs
+- **Optional: Discord webhook** — Personal notifications (lightweight alternative for mobile alerts)
+- **Optional: Simple dashboard** — HTML dashboard generated locally (no external services)
 
-### AI / LLM
-- **OpenAI API** — GPT-4 for opportunity classification, reasoning, report generation
-- **Anthropic API (Claude)** — alternative LLM for strategy reasoning
-- **Local LLM (Ollama)** — cost-effective alternative for high-frequency analysis
+### AI / LLM (Personal Setup)
+- **Local LLM (Ollama + Llama 3 / Qwen 2.5)** — Primary option for cost-free operation
+- **LM Studio** — Alternative local LLM with GUI for model management
+- **OpenAI API** — Optional for testing/comparison (paid)
+- **Anthropic API (Claude)** — Optional alternative (paid)
+
+**Key advantage of local LLMs:** Zero API costs, full privacy, customizable for your trading style
 
 ---
 
@@ -155,7 +162,7 @@ Atlas runs as an autonomous pipeline with **three distinct stages**:
 - [ ] Risk Management Agent with portfolio tracking
 - [ ] Trade Execution Agent with paper trading (Alpaca sandbox)
 - [ ] PostgreSQL database for opportunity and trade logging
-- [ ] Slack integration for notifications
+- [ ] Terminal notifications and logging system
 - [ ] Single-symbol test mode (`--symbol AAPL --dry-run`)
 
 **Phase 2 — Production Hardening:**
@@ -195,10 +202,10 @@ algoTrading/
 │   ├── services/
 │   │   ├── market_data.py          # Alpaca, Polygon, Yahoo Finance clients
 │   │   ├── broker.py               # Alpaca Trading API wrapper
-│   │   ├── news_sentiment.py      # NewsAPI, Twitter, Reddit sentiment
-│   │   ├── database.py             # PostgreSQL connection and models
-│   │   ├── slack.py                # Slack notifications
-│   │   └── llm.py                  # OpenAI/Anthropic client wrapper
+│   │   ├── news_sentiment.py      # NewsAPI, Reddit sentiment (optional)
+│   │   ├── database.py             # SQLite/PostgreSQL connection and models
+│   │   ├── notifications.py        # Terminal output, logs, optional Discord
+│   │   └── llm.py                  # Local LLM (Ollama) / cloud LLM wrapper
 │   │
 │   ├── core/
 │   │   ├── config.py               # Environment variables, API keys
@@ -239,7 +246,7 @@ algoTrading/
 3. **Service abstraction** — swappable data sources (easy to switch from Alpaca to IBKR)
 4. **LLM-augmented decisions** — use AI for reasoning, not just rule-based signals
 5. **Comprehensive logging** — every opportunity, decision, and trade is logged with full reasoning
-6. **Slack as the source of truth** — human oversight without blocking automation
+6. **Terminal and file logs** — clear visibility without external dependencies
 
 ---
 
@@ -266,7 +273,7 @@ algoTrading/
    - Places limit order: Buy 2 shares @ $890.00 (split the spread)
    - Order fills immediately
    - Places bracket order: Stop @ $882 (-0.9% / $16 risk) | Target @ $910 (+2.2% / $40 reward)
-   - Posts to Slack:
+   - Logs to terminal and file:
      ```
      ✅ LONG NVDA x2 @ $890.00 | 15m Momentum
      Stop: $882 | Target: $910 | Risk: $16 | Reward: $40 | R:R 2.5:1
@@ -279,7 +286,7 @@ algoTrading/
 - NVDA hits $910.00
 - Take profit order executes automatically
 - P&L: +$40 (2.2% gain)
-- Logs to database, posts update to Slack:
+- Logs to database and terminal:
   ```
   🎯 CLOSED: NVDA x2 @ $910.00 | +$40 (+2.2%)
   Hold time: 1h 45m | Exit reason: Target reached
@@ -416,7 +423,7 @@ Even with autonomous operation, maintain:
 ### Week 1: Foundation
 - [ ] Set up modular architecture (`src/agents/`, `src/services/`, `src/core/`)
 - [ ] Create config management (`.env`, `config.py`)
-- [ ] Set up PostgreSQL database schema
+- [ ] Set up SQLite database schema (or PostgreSQL if preferred)
 - [ ] Integrate Alpaca API (paper trading account)
 - [ ] Build basic Market Analysis Agent (single symbol, technical indicators only)
 
@@ -424,12 +431,13 @@ Even with autonomous operation, maintain:
 - [ ] Build Risk Management Agent (simple position sizing)
 - [ ] Build Trade Execution Agent (market orders only)
 - [ ] Connect agents in pipeline (`pipeline.py`)
-- [ ] Add Slack notifications
+- [ ] Set up structured logging to terminal and files
 - [ ] Test end-to-end with `--dry-run` flag
 
-### Week 3: Intelligence Layer
-- [ ] Integrate OpenAI API for opportunity classification
-- [ ] Add sentiment analysis (NewsAPI)
+### Week 3: Intelligence Layer (Local LLM Focus)
+- [ ] Set up Ollama with Llama 3.1 or Qwen 2.5 locally
+- [ ] Integrate local LLM for opportunity classification
+- [ ] Add sentiment analysis (NewsAPI or alternative free sources)
 - [ ] Implement multi-timeframe analysis
 - [ ] Add strategy reasoning to trade logs
 
@@ -472,38 +480,43 @@ Even with autonomous operation, maintain:
 
 ---
 
-## 13. Technology Stack Recommendations
+## 13. Technology Stack Recommendations (Personal Project Focus)
 
 ### Core Languages & Frameworks
 - **Python 3.11+** — Main language (already in use)
-- **FastAPI** — If building a REST API for remote control
-- **Celery + Redis** — For task queue and scheduling (alternative to simple loops)
+- **FastAPI** — Optional: If building a local web UI
+- **Schedule library** — Simple task scheduling (no external dependencies)
 
 ### Data & Database
-- **PostgreSQL** — Trade history, positions, signals
-- **TimescaleDB** — Time-series extension for tick data
-- **Redis** — Caching market data, opportunity queue
+- **SQLite** — Lightweight, serverless database (perfect for personal projects)
+- **PostgreSQL** — Optional upgrade if you need more advanced features
+- **CSV/JSON** — Simple flat files for backups and analysis
 
 ### Market Data & Trading
 - **Alpaca Markets API** — Primary (commission-free, great API, paper trading)
-- **Polygon.io** — Alternative for data (Alpaca includes it)
+- **Yahoo Finance (yfinance)** — Already integrated, free data
+- **pandas-datareader** — Already integrated, multiple free sources
 - **ccxt** — If expanding to crypto (unified exchange API)
 
-### AI / LLM
-- **OpenAI Python SDK** — GPT-4 for reasoning
-- **LangChain** — If building complex LLM workflows
-- **Ollama + Llama 3** — Cost-effective local alternative
+### AI / LLM (Local First)
+- **Ollama + Llama 3.1 / Qwen 2.5** — Primary recommendation (100% free, local)
+- **LM Studio** — Alternative local LLM with GUI
+- **LiteLLM** — Unified interface for switching between local/cloud LLMs
+- **OpenAI API** — Optional for testing (paid)
+- **Anthropic API** — Optional alternative (paid)
 
-### Monitoring & Alerting
-- **Slack API** — Real-time notifications
-- **Grafana + Prometheus** — Dashboards and metrics
-- **Sentry** — Error tracking and alerting
+### Monitoring & Alerting (Personal Setup)
+- **Terminal output with rich** — Colored, formatted console output
+- **Log files** — Structured logging to `data/logs/`
+- **Discord webhook (optional)** — Free mobile notifications
+- **Email alerts (optional)** — SMTP for important events
+- **Simple HTML dashboard** — Generate static HTML reports locally
 
-### Deployment
-- **Docker** — Containerization
-- **Google Cloud Run** — Serverless deployment (cost-effective)
-- **AWS Lambda + EventBridge** — Alternative serverless option
-- **GitHub Actions** — CI/CD pipeline
+### Deployment (Keep It Simple)
+- **Run locally** — No deployment needed for personal use
+- **Cron job** — Schedule on your local machine or VPS
+- **Docker (optional)** — Containerization if you want portability
+- **Systemd service** — Run as background service on Linux
 
 ### Already Installed (Keep Using)
 - `pandas`, `numpy` — Data manipulation
